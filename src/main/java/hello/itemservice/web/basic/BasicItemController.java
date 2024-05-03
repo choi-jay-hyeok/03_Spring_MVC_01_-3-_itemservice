@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -82,10 +83,20 @@ public class BasicItemController {
     // 그 때문에 상품 저장 후 이동한 페이지에서 새로고침을 하게 되면 상품 id가 계속 올라가면서 동일한 내용의 상품이 계속 저장됨
     // 이를 해결하기 위해 return 상품 페이지가 아닌 redirect 로 get 요청을 해줌(PRG 패턴, Post/Redirect/Get)
     // PRG 패턴을 사용한 후 상품 등록 후 새로고침을 하면 마지막 요청(다른 URL로 Get 요청)을 보내게 되므로 잘못된 상품 등록이 되지 않음
-    @PostMapping("/add")
+//    @PostMapping("/add")
     public String addItemV5(Item item) {
         itemRepository.save(item);
         return "redirect:/basic/items/" + item.getId();
+    }
+
+    // 위와 같이 redirect 방식으로 리턴할 때, 위에서는 item.getId 가 숫자여서 괜찮았지만 한글, 혹은 띄어쓰기가 있는 경우에는 인코딩이 필수
+    // RedirectAttributes 를 사용하면 URL 인코딩 해줌
+    @PostMapping("/add")
+    public String addItemV6(Item item, RedirectAttributes redirectAttributes) {
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId()); // 여기서 itemId 라는 이름으로 넘긴 savedItem.getId가 밑의 return 에서 {itemId} 안에 들어감(치환)
+        redirectAttributes.addAttribute("status", true); // 치환되지 않은 status 는 쿼리 파라미터 형식으로 URL에 들어감 ex) localhost:8080/basic/items/{itemId}?status=true
+        return "redirect:/basic/items/{itemId}";
     }
 
     @GetMapping("/{itemId}/edit")
