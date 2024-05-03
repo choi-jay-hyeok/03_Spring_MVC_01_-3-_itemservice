@@ -49,7 +49,7 @@ public class BasicItemController {
         item.setPrice(price);
         item.setQuantity(quantity);
 
-        itemRepository.save(item); // 생성 및 itemName, price, quantity를 설정한 item 인스턴스를 리포지토리에 저장
+        itemRepository.save(item); // 생성 및 itemNae, price, quantity를 설정한 item 인스턴스를 리포지토리에 저장
 
         model.addAttribute("item", item); // item 인스턴스를 model에 전달
 
@@ -72,10 +72,20 @@ public class BasicItemController {
         return "/basic/item";
     }
 
-    @PostMapping("/add")
-    public String addItemV4(Item item) { // 생략 시, String 타입같은 것이 오면 @RequestParam 자동 적용, 사용자 정의 타입의 클래스가 오면 @ModelAttribute 자동 적용
+//    @PostMapping("/add")
+    public String addItemV4(Item item) { // 어노테이션 생략 시, String 타입같은 것이 오면 @RequestParam 자동 적용, 사용자 정의 타입의 클래스가 오면 @ModelAttribute 자동 적용
         itemRepository.save(item);
         return "/basic/item";
+    }
+
+    // return 을 redirect 방식으로. Why? -> 상품 저장 후 상품 페이지에서 새로 고침을 하게 되면 마지막 요청(post 방식으로 데이터를 보내서 저장)을 다시 보내게 됨
+    // 그 때문에 상품 저장 후 이동한 페이지에서 새로고침을 하게 되면 상품 id가 계속 올라가면서 동일한 내용의 상품이 계속 저장됨
+    // 이를 해결하기 위해 return 상품 페이지가 아닌 redirect 로 get 요청을 해줌(PRG 패턴, Post/Redirect/Get)
+    // PRG 패턴을 사용한 후 상품 등록 후 새로고침을 하면 마지막 요청(다른 URL로 Get 요청)을 보내게 되므로 잘못된 상품 등록이 되지 않음
+    @PostMapping("/add")
+    public String addItemV5(Item item) {
+        itemRepository.save(item);
+        return "redirect:/basic/items/" + item.getId();
     }
 
     @GetMapping("/{itemId}/edit")
